@@ -3,7 +3,12 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-console.log(ctx);
+//canvas settings
 ctx.fillStyle = 'white';
-ctx.arc(100, 100, 50, 0, Math.PI*2 );
-ctx.fill();
+ctx.strokeStyle = 'white';
+ctx.lineWidth = 1;
+
+class Particle
+  {
+    
+  }
