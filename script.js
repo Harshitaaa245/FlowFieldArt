@@ -22,8 +22,8 @@ class Particle
     }
     update()
     {
-      this.x += this.speedX;
-      this.y += this.speedY;
+      this.x += this.effect.speedX;
+      this.y += this.effect.speedY;
       
     }
   }
@@ -68,6 +68,5 @@ function animate()
   effect.render(ctx);
   requestAnimationFrame(animate);
 }
-
 animate();
 
