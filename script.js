@@ -15,6 +15,8 @@ class Particle
       this.effect = effect;
       this.x = Math.floor(Math.random()*this.effect.width);
       this.y = Math.floor(Math.random()*this.effect.height);
+      this.originX = x;
+      this.originY = y;
       this.speedX = Math.random()*5 - 2.5;
       this.speedY = Math.random()*5 - 2.5;
       this.history = [{x: this.x, y:this.y}];
@@ -33,8 +35,8 @@ class Particle
     }
     update()
     {
-      this.x += this.speedX + Math.random()*15 - 7.5;
-      this.y += this.speedY + Math.random()*15 - 7.5;
+      this.x = this.originX + Math.sin(Date.now() * 0.001 + this.originX) * 2;
+      this.y = this.originY + Math.cos(Date.now() * 0.001 + this.originY) * 2;
       this.history.push({x: this.x, y:this.y});
       if(this.history.length>this.maxLength)
       {
@@ -70,9 +72,33 @@ class Effect
         particle.update();
       })
     }
+
+    createParticlesFromImage(imageData) {
+  this.particles = [];
+  for (let y = 0; y < imageData.height; y += 4) {
+    for (let x = 0; x < imageData.width; x += 4) {
+      const index = (y * imageData.width + x) * 4;
+      const alpha = imageData.data[index + 3];
+      if (alpha > 128) {
+        this.particles.push(new Particle(this, x, y));
+      }
+    }
+  }
+}
+
   }
 
 const effect = new Effect(canvas.width, canvas.height);
+
+const image = new Image();
+image.src = 'your-image-path.jpg'; 
+image.onload = () => {
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  effect.createParticlesFromImage(imageData);
+};
+
 
 function animate()
 {
