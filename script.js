@@ -18,8 +18,7 @@ class Particle
       this.speedX = Math.random()*5 - 2.5;
       this.speedY = Math.random()*5 - 2.5;
       this.history = [{x: this.x, y:this.y}];
-      this.maxLength = Math.floor(Math.random()*100 + 10);
-      
+      this.maxLength = Math.floor(Math.random()*100 + 10); 
     }
     draw(context)
     {
