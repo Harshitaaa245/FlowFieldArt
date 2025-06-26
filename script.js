@@ -30,7 +30,7 @@ class Particle
         {
           context.lineTo(this.history[i].x, this.history[i].y);
         }
-      conctext.stroke();
+      context.stroke();
     }
     update()
     {
