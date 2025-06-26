@@ -20,6 +20,12 @@ class Particle
     {
       context.fillRect(this.x,this.y,10,10);
     }
+    update()
+    {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      
+    }
   }
 
 class Effect
@@ -31,6 +37,9 @@ class Effect
       this.particles = [];
       this.numberOfParticles = 50;
       this.init();
+      this.speedX = 1;
+      this.speedY = 1;
+      
     }
 
     init()
@@ -46,10 +55,19 @@ class Effect
     {
       this.particles.forEach(particle=>{
         particle.draw(context);
+        particle.update();
       })
     }
   }
 
 const effect = new Effect(canvas.width, canvas.height);
-effect.render(ctx);
+
+function animate()
+{
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  effect.render(ctx);
+  requestAnimationFrame(animate);
+}
+
+animate();
 
