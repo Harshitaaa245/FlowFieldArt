@@ -1,86 +1,102 @@
+const imgElement = document.getElementById('sourceImage');
 const canvas = document.getElementById('canvas1');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// canvas settings
-ctx.fillStyle = 'white';
-ctx.strokeStyle = 'white';
-ctx.lineWidth = 1;
+imgElement.onload = () => {
+  const src = cv.imread(imgElement);
+  const gray = new cv.Mat();
+  const edges = new cv.Mat();
+  const gradX = new cv.Mat();
+  const gradY = new cv.Mat();
 
-class Particle {
-  constructor(effect, x, y) {
-    this.effect = effect;
-    this.originX = x;
-    this.originY = y;
-    this.x = x;
-    this.y = y;
-    this.speedX = Math.random() * 1 - 0.5;
-    this.speedY = Math.random() * 1 - 0.5;
-    this.angle = Math.random() * 2 * Math.PI;
-  }
+  // Convert to grayscale
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
 
-  update() {
-    this.angle += 0.02;
-    this.x = this.originX + Math.sin(this.angle) * 2;
-    this.y = this.originY + Math.cos(this.angle) * 2;
-  }
+  // Edge detection
+  cv.Canny(gray, edges, 50, 150);
 
-  draw(context) {
-    context.beginPath();
-    context.arc(this.x, this.y, 1.2, 0, Math.PI * 2);
-    context.fill();
-  }
-}
+  // Sobel gradient
+  cv.Sobel(gray, gradX, cv.CV_64F, 1, 0, 3);
+  cv.Sobel(gray, gradY, cv.CV_64F, 0, 1, 3);
 
-class Effect {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
-    this.particles = [];
-  }
-
-  createParticlesFromImage(imageData) {
-    this.particles = [];
-    for (let y = 0; y < imageData.height; y += 6) {
-      for (let x = 0; x < imageData.width; x += 6) {
-        const index = (y * imageData.width + x) * 4;
-        const alpha = imageData.data[index + 3];
-        if (alpha > 128) {
-          this.particles.push(new Particle(this, x, y));
-        }
+  // Extract edge pixels and their gradient angle
+  const edgePoints = [];
+  for (let y = 0; y < edges.rows; y += 2) {
+    for (let x = 0; x < edges.cols; x += 2) {
+      if (edges.ucharPtr(y, x)[0] > 0) {
+        const dx = gradX.doubleAt(y, x);
+        const dy = gradY.doubleAt(y, x);
+        const angle = Math.atan2(dy, dx);
+        edgePoints.push({
+          x: x * (canvas.width / edges.cols),
+          y: y * (canvas.height / edges.rows),
+          angle
+        });
       }
     }
   }
 
-  render(context) {
-    this.particles.forEach(particle => {
-      particle.update();
-      particle.draw(context);
-    });
-  }
-}
+  // Clean up
+  src.delete(); gray.delete(); edges.delete(); gradX.delete(); gradY.delete();
 
-const effect = new Effect(canvas.width, canvas.height);
-
-// Load image
-const image = new Image();
-image.src = 'img/portrait.png'; // Make sure this file exists
-image.onload = () => {
-  // Resize image to canvas size
-  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  effect.createParticlesFromImage(imageData);
-  animate();
+  // Launch particles
+  startParticles(edgePoints);
 };
 
-function animate() {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  effect.render(ctx);
-  requestAnimationFrame(animate);
+function startParticles(edgePoints) {
+  const particles = [];
+
+  for (let i = 0; i < 1000; i++) {
+    const p = edgePoints[Math.floor(Math.random() * edgePoints.length)];
+    if (p) {
+      particles.push(new Particle(p.x, p.y, p.angle));
+    }
+  }
+
+  function animate() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (let p of particles) {
+      p.update();
+      p.draw(ctx);
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
 }
 
+class Particle {
+  constructor(x, y, angle) {
+    this.x = x;
+    this.y = y;
+    this.angle = angle;
+    this.history = [{ x, y }];
+    this.maxLength = 20;
+  }
+
+  update() {
+    const speed = 1.2;
+    this.x += Math.cos(this.angle) * speed;
+    this.y += Math.sin(this.angle) * speed;
+    this.history.push({ x: this.x, y: this.y });
+    if (this.history.length > this.maxLength) this.history.shift();
+  }
+
+  draw(ctx) {
+    ctx.beginPath();
+    ctx.moveTo(this.history[0].x, this.history[0].y);
+    for (let point of this.history) {
+      ctx.lineTo(point.x, point.y);
+    }
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 0.3;
+    ctx.stroke();
+  }
+}
 
 
