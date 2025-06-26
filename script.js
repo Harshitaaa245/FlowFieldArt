@@ -2,8 +2,8 @@ const canvas = document.getElementById('canvas1');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
- 
-// Canvas settings
+
+// canvas settings
 ctx.fillStyle = 'white';
 ctx.strokeStyle = 'white';
 ctx.lineWidth = 1;
@@ -15,28 +15,21 @@ class Particle {
     this.originY = y;
     this.x = x;
     this.y = y;
-    this.speedX = Math.random() * 2 - 1;
-    this.speedY = Math.random() * 2 - 1;
-    this.history = [{ x: this.x, y: this.y }];
-    this.maxLength = Math.floor(Math.random() * 50 + 20);
+    this.speedX = Math.random() * 1 - 0.5;
+    this.speedY = Math.random() * 1 - 0.5;
+    this.angle = Math.random() * 2 * Math.PI;
+  }
+
+  update() {
+    this.angle += 0.02;
+    this.x = this.originX + Math.sin(this.angle) * 2;
+    this.y = this.originY + Math.cos(this.angle) * 2;
   }
 
   draw(context) {
     context.beginPath();
-    context.moveTo(this.history[0].x, this.history[0].y);
-    for (let i = 1; i < this.history.length; i++) {
-      context.lineTo(this.history[i].x, this.history[i].y);
-    }
-    context.stroke();
-  }
-
-  update() {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    this.history.push({ x: this.x, y: this.y });
-    if (this.history.length > this.maxLength) {
-      this.history.shift();
-    }
+    context.arc(this.x, this.y, 1.2, 0, Math.PI * 2);
+    context.fill();
   }
 }
 
@@ -49,32 +42,32 @@ class Effect {
 
   createParticlesFromImage(imageData) {
     this.particles = [];
-    for (let y = 0; y < imageData.height; y += 4) {
-      for (let x = 0; x < imageData.width; x += 4) {
+    for (let y = 0; y < imageData.height; y += 6) {
+      for (let x = 0; x < imageData.width; x += 6) {
         const index = (y * imageData.width + x) * 4;
         const alpha = imageData.data[index + 3];
-        if (alpha > 100) {
-          const mappedX = x * (canvas.width / imageData.width);
-          const mappedY = y * (canvas.height / imageData.height);
-          this.particles.push(new Particle(this, mappedX, mappedY));
+        if (alpha > 128) {
+          this.particles.push(new Particle(this, x, y));
         }
       }
     }
   }
 
   render(context) {
-    this.particles.forEach(p => {
-      p.update();
-      p.draw(context);
+    this.particles.forEach(particle => {
+      particle.update();
+      particle.draw(context);
     });
   }
 }
 
 const effect = new Effect(canvas.width, canvas.height);
 
+// Load image
 const image = new Image();
-image.src = 'img/art1.jpg'; // replace with your actual image path
+image.src = 'img/portrait.png'; // Make sure this file exists
 image.onload = () => {
+  // Resize image to canvas size
   ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -83,7 +76,8 @@ image.onload = () => {
 };
 
 function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   effect.render(ctx);
   requestAnimationFrame(animate);
 }
