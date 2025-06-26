@@ -91,7 +91,7 @@ class Effect
 const effect = new Effect(canvas.width, canvas.height);
 
 const image = new Image();
-image.src = 'your-image-path.jpg'; 
+image.src = 'img/art1.jpg'; 
 image.onload = () => {
   ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
